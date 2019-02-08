@@ -598,6 +598,18 @@ function consultNome($nome, $cidade, $uf, $cep, $cookie){
 	$ref  = $url;
 	$post = "Documento=&PessoaFisica=true,false&PessoaJuridica=true,false&Nome={$nome}&NomeFantasia=&BuscaSimilares=true,false&Segmento=&DataNascimento=&CEP={$cep}&Estado={$uf}&cidade={$cidade}&Logradouro=&Numero=&DDD=&Telefone=";
 	$res  = curl($url, $cookie, $post, $ref, true);
+
+
+ 	
+	if(stristr($res, 'Dados Principais</h3>')){
+		$ver = extraiDoc($res);
+		if ($ver == false) {
+			return array('msg'=> 'nada encontrado');
+		}else{
+			return $ver;
+		}
+	}
+	
 	if(stristr($res, '/Account/RedirectToLogin?ReturnUrl=')){
 		return false;
 	}
@@ -866,6 +878,7 @@ if(isset($_REQUEST['telefoneok']) and strlen($_REQUEST['telefoneok']) > 6){
 	$cidade = $_REQUEST['cidade'];
 	$uf  	= $_REQUEST['uf'];
 	$cep 	= $_REQUEST['cep'];
+
 	$ver 	= consultNome($nome, $cidade, $uf, $cep, $cookie);
 
 }elseif(isset($_GET['doc'])){
