@@ -489,8 +489,8 @@ function consultFone($ddd, $numero, $cookie) {
 	$url  = 'https://ziponline.zipcode.com.br/Consultas/ConsultaTelefone';
 	$ref  = $url;
 	$post = "DDD={$ddd}&NumeroTel={$numero}";	
-	$res  = curl($url, $cookie, $post, $ref, true);
 
+	$res  = curl($url, $cookie, $post, $ref, true);
 	if(stristr($res, 'mero de telefone corretamente')){
 		return 'nada encontrado';
 	}
@@ -517,18 +517,34 @@ function consultFone($ddd, $numero, $cookie) {
 		$dados = explode('<tr class="gray1-bg">', $res);
 
 		foreach($dados as $dado) {
+
 			if(stristr($dado, '?idBase=')){
 				$idDoc = corta($dado, '?idBase=', '"');
 				$doc   = corta($dado, '<td>', '</td>');
 				$nome  = corta($dado, $idDoc.'">', '</a>');
+
+				if(strlen($idDoc) > 1) {
+					if(strlen($doc) < 5) {
+						$doc = 'XXX.XXX.XXX-XX';
+					}
+				}
+
+				if(stristr($dado, 'PessoaFisica?idBase')) {
+					$tipo = 'Fisica';
+				}else{
+					$tipo = 'Juridica';
+				}
+
 				$list[]  = array(
 					'id'   => $idDoc,
 					'doc'  => $doc,
+					'tipo'  => $tipo,
 					'nome' => $nome,
 					'logradouro' => '-',
 					'cidade' => '-',
 					'uf' => '-'
 				);
+
 			}
 		}
 		return $list;
@@ -593,13 +609,13 @@ function consultEnd($logradouro, $numero, $cep, $estado, $cidade, $cookie) {
 
 }
 
-function consultNome($nome, $cidade, $uf, $cep, $cookie){
+function consultNome($nome, $cidade, $uf, $cep, $cookie) {
 	$url  = 'https://ziponline.zipcode.com.br/Consultas/ConsultaPFPJ';
 	$ref  = $url;
-	$post = "Documento=&PessoaFisica=true,false&PessoaJuridica=true,false&Nome={$nome}&NomeFantasia=&BuscaSimilares=true,false&Segmento=&DataNascimento=&CEP={$cep}&Estado={$uf}&cidade={$cidade}&Logradouro=&Numero=&DDD=&Telefone=";
+
+	$post = "Documento=&PessoaFisica=true&PessoaFisica=false&PessoaJuridica=true&PessoaJuridica=false&Nome={$nome}&NomeFantasia=&BuscaSimilares=true&BuscaSimilares=false&Segmento=&DataNascimento=&CEP={$cep}&Estado={$uf}&cidade={$cidade}&Logradouro=&Numero=&DDD=&Telefone=";
+
 	$res  = curl($url, $cookie, $post, $ref, true);
-
-
  	
 	if(stristr($res, 'Dados Principais</h3>')){
 		$ver = extraiDoc($res);
@@ -869,8 +885,10 @@ if(strlen(http_build_query($_GET)) > 1 OR strlen(http_build_query($_POST)) > 1){
 
 if(isset($_REQUEST['telefoneok']) and strlen($_REQUEST['telefoneok']) > 6){
 	$num = $_REQUEST['telefoneok'];
+	
 	$num = explode(' ', $num);
 	$ddd = str_replace(array('(', ')'), '', $num[0]);
+
 	$numero = str_replace('-', '', $num[1]);
 	$ver = consultFone($ddd, $numero, $cookie);
 }elseif(isset($_REQUEST['nome'])){
